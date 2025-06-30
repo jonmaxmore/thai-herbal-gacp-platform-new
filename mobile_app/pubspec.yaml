@@ -1,0 +1,93 @@
+name: gacp_herbal_ai
+description: GACP Herbal AI Platform for Mobile Devices
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^2.4.9
+  google_maps_flutter: ^2.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  retrofit_generator: ^8.0.4
+  hive_generator: ^2.0.1
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+    - assets/ai_models/
+    - assets/ai_models/models/disease_detector_v1.onnx
+    - assets/ai_models/models/quality_detector_v1.onnx
+    - assets/ai_models/models/herb_classifier_v1.onnx
+  fonts:
+    - family: Sarabun
+      fonts:
+        - asset: assets/fonts/Sarabun-Regular.ttf
+        - asset: assets/fonts/Sarabun-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Sarabun-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Sarabun-Bold.ttf
+          weight: 700
+
+flutter_intl:
+  enabled: true
+  main_locale: th
+  arb_dir: lib/l10n
+  output_dir: lib/generated
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    unused_import: warning
+    dead_code: warning
+    missing_required_param: error
+    missing_return: error
+    always_declare_return_types: warning  
+    avoid_print: warning
+    prefer_const_constructors: warning
+    prefer_const_literals_to_create_immutables: warning
+    prefer_final_locals: warning
+    unnecessary_this: warning
+    prefer_single_quotes: warning
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_locals: true
+    avoid_print: true
+    always_declare_return_types: true
+    unnecessary_this: true
+    prefer_single_quotes: true
+    sort_pub_dependencies: true
+    avoid_renaming_method_parameters: true
+    avoid_unused_constructor_parameters: true
+    avoid_returning_null_for_void: true
+    avoid_shadowing_type_parameters: true
+    avoid_types_on_closure_parameters: false
+    use_super_parameters: true
