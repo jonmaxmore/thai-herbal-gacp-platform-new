@@ -37,11 +37,10 @@ import '../shared/widgets/error_page.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
   final hasSeenOnboarding = ref.watch(onboardingProvider);
-  
+
   return GoRouter(
     initialLocation: '/splash',
-    debugLogDiagnostics: true,
-    
+    debugLogDiagnostics: false,
     redirect: (context, state) {
       final location = state.location;
       
@@ -69,8 +68,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       
       // Handle authentication
-      final isOnAuthPage = _isAuthPage(location);
-      final isOnPublicPage = _isPublicPage(location);
+      final isOnAuthPage = location.startsWith('/auth/');
+      final isOnPublicPage = ['/splash', '/onboarding', '/help'].contains(location);
       
       if (!isAuthenticated && !isOnAuthPage && !isOnPublicPage) {
         return '/auth/login';
@@ -82,7 +81,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       
       return null;
     },
-    
     routes: [
       // Splash
       GoRoute(
@@ -128,9 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       
       // Main App with Bottom Navigation
       ShellRoute(
-        builder: (context, state, child) {
-          return MainScaffold(child: child);
-        },
+        builder: (context, state, child) => MainScaffold(child: child),
         routes: [
           // Dashboard
           GoRoute(
@@ -261,17 +257,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SettingsPage(),
         routes: [
           GoRoute(
-            path: '/language',
+            path: 'language',
             name: 'language-settings',
             builder: (context, state) => const LanguageSettingsPage(),
           ),
           GoRoute(
-            path: '/notifications',
+            path: 'notifications',
             name: 'notification-settings',
             builder: (context, state) => const NotificationSettingsPage(),
           ),
           GoRoute(
-            path: '/privacy',
+            path: 'privacy',
             name: 'privacy-settings',
             builder: (context, state) => const PrivacySettingsPage(),
           ),
@@ -315,15 +311,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
-
-// Helper functions
-bool _isAuthPage(String location) {
-  return location.startsWith('/auth/');
-}
-
-bool _isPublicPage(String location) {
-  return ['/splash', '/onboarding', '/help'].contains(location);
-}
 
 Page<dynamic> _buildPageWithTransition({
   required Widget child,

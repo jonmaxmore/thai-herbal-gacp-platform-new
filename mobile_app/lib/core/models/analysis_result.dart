@@ -24,7 +24,7 @@ class AnalysisResult {
     required this.diseaseDetection,
     required this.maturityAssessment,
     required this.gacpCompliance,
-    required this.recommendations,
+    this.recommendations = const [],
     required this.processingTimeMs,
   });
 
@@ -60,10 +60,11 @@ class AnalysisResult {
   }
 
   @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is AnalysisResult && other.id == id;
-  }
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AnalysisResult && 
+      runtimeType == other.runtimeType && 
+      id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -79,7 +80,7 @@ class HerbClassificationResult {
   const HerbClassificationResult({
     required this.predictedHerb,
     required this.confidence,
-    required this.allProbabilities,
+    this.allProbabilities = const {},
     required this.inferenceTimeMs,
   });
 
@@ -121,7 +122,7 @@ class DiseaseDetectionResult {
   final int inferenceTimeMs;
 
   const DiseaseDetectionResult({
-    required this.detectedIssues,
+    this.detectedIssues = const [],
     required this.safetyScore,
     required this.healthStatus,
     required this.inferenceTimeMs,
@@ -187,7 +188,7 @@ class GacpComplianceResult {
   const GacpComplianceResult({
     required this.score,
     required this.status,
-    required this.issues,
+    this.issues = const [],
     required this.certificateReady,
   });
 

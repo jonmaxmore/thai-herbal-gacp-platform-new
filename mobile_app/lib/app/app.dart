@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'router.dart';
 import 'theme.dart';
+import 'notification_service.dart';
 import '../core/providers/auth_provider.dart';
 import '../core/providers/locale_provider.dart';
 import '../core/providers/theme_provider.dart';
 import '../core/providers/connectivity_provider.dart';
 import '../core/utils/logger.dart';
+import '../core/utils/app_constants.dart';
 import '../shared/widgets/connectivity_overlay.dart';
 import '../shared/widgets/global_loading_overlay.dart';
 
@@ -18,11 +21,22 @@ class GACPHerbalApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize notification service (production-ready)
+    ref.listen<NotificationService>(
+      notificationServiceProvider,
+      (previous, next) {
+        next.initialize(context);
+      },
+    );
+
+    // Lock orientation to portrait for production
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
     final connectivity = ref.watch(connectivityProvider);
-    
+
     return MaterialApp.router(
       // App Information
       title: 'GACP Herbal AI',
@@ -48,16 +62,16 @@ class GACPHerbalApp extends ConsumerWidget {
       
       // Global Configuration
       builder: (context, child) {
-        // Error handling for widget tree
+        // Global error handling for widget tree
         ErrorWidget.builder = (FlutterErrorDetails details) {
           AppLogger.error('Widget error', details.exception, details.stack);
           return _buildErrorWidget(details);
         };
-        
+
         return MediaQuery(
           // Prevent system text scaling from affecting UI
           data: MediaQuery.of(context).copyWith(
-            textScaleFactor: 1.0,
+            textScaler: const TextScaler.linear(1.0),
           ),
           child: Stack(
             children: [
@@ -82,7 +96,7 @@ class GACPHerbalApp extends ConsumerWidget {
       ),
     );
   }
-  
+
   Widget _buildErrorWidget(FlutterErrorDetails details) {
     return Material(
       child: Container(

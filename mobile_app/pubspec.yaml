@@ -51,6 +51,7 @@ dependencies:
   connectivity_plus: ^5.0.1
   geolocator: ^10.1.0
   geocoding: ^2.1.1
+  google_maps_flutter: ^2.6.0
   
   # File Handling
   path_provider: ^2.1.1
@@ -117,3 +118,40 @@ flutter_intl:
   main_locale: th
   arb_dir: lib/l10n
   output_dir: lib/generated
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    unused_import: warning
+    dead_code: warning
+    missing_required_param: error
+    missing_return: error
+    always_declare_return_types: warning  
+    avoid_print: warning
+    prefer_const_constructors: warning
+    prefer_const_literals_to_create_immutables: warning
+    prefer_final_locals: warning
+    unnecessary_this: warning
+    prefer_single_quotes: warning
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_locals: true
+    avoid_print: true
+    always_declare_return_types: true
+    unnecessary_this: true
+    prefer_single_quotes: true
+    sort_pub_dependencies: true
+    avoid_renaming_method_parameters: true
+    avoid_unused_constructor_parameters: true
+    avoid_returning_null_for_void: true
+    avoid_shadowing_type_parameters: true
+    avoid_types_on_closure_parameters: false
+    use_super_parameters: true

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
-
 import '../../../core/utils/logger.dart';
 
 final cameraProvider = StateNotifierProvider<CameraNotifier, CameraState>((ref) {
@@ -23,14 +22,12 @@ class CameraNotifier extends StateNotifier<CameraState> {
       if (_cameras.isEmpty) {
         throw Exception('ไม่พบกล้องในอุปกรณ์');
       }
-
       await _initializeController();
-      
-    } catch (e) {
-      AppLogger.error('Camera initialization failed', e);
+    } catch (e, s) {
+      AppLogger.error('Camera initialization failed', e, s);
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: 'ไม่สามารถเริ่มต้นกล้องได้',
       );
     }
   }
@@ -48,19 +45,20 @@ class CameraNotifier extends StateNotifier<CameraState> {
 
     try {
       await controller.initialize();
-      
       state = state.copyWith(
         controller: controller,
         isLoading: false,
         isInitialized: true,
         error: null,
       );
-
       AppLogger.info('Camera initialized successfully');
-      
-    } catch (e) {
+    } catch (e, s) {
       controller.dispose();
-      throw Exception('ไม่สามารถเริ่มต้นกล้องได้: $e');
+      AppLogger.error('Camera initialization error', e, s);
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ไม่สามารถเริ่มต้นกล้องได้',
+      );
     }
   }
 
@@ -71,12 +69,10 @@ class CameraNotifier extends StateNotifier<CameraState> {
 
     try {
       await state.controller?.dispose();
-      
       _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
       await _initializeController();
-      
-    } catch (e) {
-      AppLogger.error('Failed to switch camera', e);
+    } catch (e, s) {
+      AppLogger.error('Failed to switch camera', e, s);
       state = state.copyWith(
         isLoading: false,
         error: 'ไม่สามารถเปลี่ยนกล้องได้',
@@ -90,11 +86,9 @@ class CameraNotifier extends StateNotifier<CameraState> {
     try {
       final newFlashMode = state.isFlashOn ? FlashMode.off : FlashMode.torch;
       await state.controller!.setFlashMode(newFlashMode);
-      
       state = state.copyWith(isFlashOn: !state.isFlashOn);
-      
-    } catch (e) {
-      AppLogger.error('Failed to toggle flash', e);
+    } catch (e, s) {
+      AppLogger.error('Failed to toggle flash', e, s);
     }
   }
 
@@ -119,12 +113,30 @@ class CameraNotifier extends StateNotifier<CameraState> {
     try {
       await state.controller?.dispose();
       await _initializeController();
-    } catch (e) {
-      AppLogger.error('Failed to reinitialize camera', e);
+    } catch (e, s) {
+      AppLogger.error('Failed to reinitialize camera', e, s);
       state = state.copyWith(
         isLoading: false,
         error: 'ไม่สามารถเริ่มต้นกล้องใหม่ได้',
       );
+    }
+  }
+
+  Future<XFile?> takePicture() async {
+    if (!state.isInitialized || state.controller == null || state.isLoading) {
+      return null;
+    }
+    
+    try {
+      state = state.copyWith(isLoading: true);
+      final file = await state.controller!.takePicture();
+      state = state.copyWith(isLoading: false);
+      AppLogger.info('Picture taken successfully');
+      return file;
+    } catch (e, s) {
+      AppLogger.error('Failed to take picture', e, s);
+      state = state.copyWith(isLoading: false, error: 'ถ่ายภาพไม่สำเร็จ');
+      return null;
     }
   }
 

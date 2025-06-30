@@ -1,29 +1,38 @@
-from fastapi import FastAPI, File, UploadFile, Depends, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import logging
 import uvicorn
 import os
 from pathlib import Path
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import auth, ai_analysis, certificates, herbs, tracking, admin
+from app.api import api_router
 from app.services.ai_service import AIService
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Logging config for production
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s"
+)
+
+# Create tables (sync for first-time setup, use Alembic for migrations in production)
+try:
+    Base.metadata.create_all(bind=engine)
+    logging.info("Database tables created or verified.")
+except Exception as e:
+    logging.error(f"Database initialization failed: {e}")
 
 # Lifespan events
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    print("🚀 Starting GACP Herbal AI Platform...")
+    logging.info("🚀 Starting GACP Herbal AI Platform...")
     await AIService.initialize()
-    print("✅ AI Models loaded successfully")
+    logging.info("✅ AI Models loaded successfully")
     yield
-    # Shutdown
-    print("🛑 Shutting down...")
+    logging.info("🛑 Shutting down...")
     AIService.cleanup()
 
 # Create FastAPI instance
@@ -36,27 +45,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# CORS middleware (configure allowed origins for production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "*").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+static_dir = os.getenv("STATIC_DIR", "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
-app.include_router(ai_analysis.router, prefix="/api/ai", tags=["ai-analysis"])
-app.include_router(certificates.router, prefix="/api/certificates", tags=["certificates"])
-app.include_router(herbs.router, prefix="/api/herbs", tags=["herbs"])
-app.include_router(tracking.router, prefix="/api/tracking", tags=["tracking"])
-app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+# Include all routers via api_router
+app.include_router(api_router, prefix="/api")
 
-@app.get("/")
+@app.get("/", tags=["root"])
 async def root():
     return {
         "message": "GACP Herbal AI Platform API",
@@ -65,15 +70,16 @@ async def root():
         "status": "operational"
     }
 
-@app.get("/health")
+@app.get("/health", tags=["health"])
 async def health_check():
     return {"status": "healthy", "ai_models": await AIService.get_status()}
 
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app",
+        "app.main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        port=int(os.getenv("PORT", 8000)),
+        log_level="info",
+        workers=int(os.getenv("UVICORN_WORKERS", 1)),
+        reload=os.getenv("ENVIRONMENT", "development") == "development"
     )

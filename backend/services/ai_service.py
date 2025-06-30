@@ -6,16 +6,17 @@ import io
 import asyncio
 from typing import Dict, List, Optional
 from pathlib import Path
+import logging
 
 class AIService:
     _herb_classifier = None
     _quality_detector = None
     _disease_detector = None
     _maturity_assessor = None
-    
+
     @classmethod
     async def initialize(cls):
-        """Initialize all AI models"""
+        """Initialize all AI models for production use."""
         try:
             model_path = Path("app/ai_models")
             
@@ -40,15 +41,15 @@ class AIService:
                 providers=['CPUExecutionProvider']
             )
             
-            print("✅ All AI models loaded successfully")
+            logging.info("✅ All AI models loaded successfully")
             
         except Exception as e:
-            print(f"❌ Error loading AI models: {e}")
+            logging.error(f"❌ Error loading AI models: {e}")
             raise e
-    
+
     @classmethod
     async def analyze_herb_image(cls, image_bytes: bytes) -> Dict:
-        """Comprehensive herb analysis"""
+        """Comprehensive herb analysis for production."""
         # Preprocess image
         image = cls._preprocess_image(image_bytes)
         
@@ -73,26 +74,19 @@ class AIService:
         }
         
         return analysis
-    
+
     @classmethod
     def _preprocess_image(cls, image_bytes: bytes) -> np.ndarray:
-        """Preprocess image for AI models"""
-        image = Image.open(io.BytesIO(image_bytes))
-        image = image.convert('RGB')
-        image = image.resize((224, 224))
-        
-        # Normalize to [-1, 1]
+        """Preprocess image for AI models (production standard)."""
+        image = Image.open(io.BytesIO(image_bytes)).convert('RGB').resize((224, 224))
         image_array = np.array(image).astype(np.float32)
         image_array = (image_array / 127.5) - 1.0
-        
-        # Add batch dimension
         image_array = np.expand_dims(image_array, axis=0)
-        
         return image_array
-    
+
     @classmethod
     async def _classify_herb(cls, image: np.ndarray) -> Dict:
-        """Classify herb species"""
+        """Classify herb species."""
         input_name = cls._herb_classifier.get_inputs()[0].name
         output = cls._herb_classifier.run(None, {input_name: image})[0]
         
@@ -106,7 +100,7 @@ class AIService:
         ]
         
         probabilities = output[0]
-        predicted_idx = np.argmax(probabilities)
+        predicted_idx = int(np.argmax(probabilities))
         confidence = float(probabilities[predicted_idx])
         
         return {
@@ -117,10 +111,10 @@ class AIService:
                 for i in range(len(herb_classes))
             }
         }
-    
+
     @classmethod
     async def _assess_quality(cls, image: np.ndarray) -> Dict:
-        """Assess overall quality"""
+        """Assess overall quality."""
         input_name = cls._quality_detector.get_inputs()[0].name
         output = cls._quality_detector.run(None, {input_name: image})[0]
         
@@ -139,10 +133,10 @@ class AIService:
             "grade": overall_grade,
             "gacp_compliant": quality_score > 0.8 and contamination_score < 0.2
         }
-    
+
     @classmethod
     async def _detect_diseases(cls, image: np.ndarray) -> Dict:
-        """Detect diseases and defects"""
+        """Detect diseases and defects."""
         input_name = cls._disease_detector.get_inputs()[0].name
         output = cls._disease_detector.run(None, {input_name: image})[0]
         
@@ -168,10 +162,10 @@ class AIService:
             "health_status": "ปลอดภัย" if not detected_issues else "มีปัญหา",
             "safety_score": float(probabilities[-1]) * 100
         }
-    
+
     @classmethod
     async def _assess_maturity(cls, image: np.ndarray) -> Dict:
-        """Assess maturity/harvest readiness"""
+        """Assess maturity/harvest readiness."""
         input_name = cls._maturity_assessor.get_inputs()[0].name
         output = cls._maturity_assessor.run(None, {input_name: image})[0]
         
@@ -188,10 +182,10 @@ class AIService:
             "optimal_harvest": harvest_readiness > 0.8,
             "days_to_optimal": cls._estimate_days_to_harvest(maturity_score)
         }
-    
+
     @classmethod
     def _calculate_quality_grade(cls, quality: float, contamination: float, freshness: float) -> str:
-        """Calculate overall quality grade"""
+        """Calculate overall quality grade."""
         if quality > 0.9 and contamination < 0.1 and freshness > 0.8:
             return "A+"
         elif quality > 0.8 and contamination < 0.2 and freshness > 0.7:
@@ -202,10 +196,10 @@ class AIService:
             return "C"
         else:
             return "D"
-    
+
     @classmethod
     def _evaluate_gacp_compliance(cls, herb_result: Dict, quality_result: Dict, disease_result: Dict) -> Dict:
-        """Evaluate GACP compliance"""
+        """Evaluate GACP compliance."""
         compliance_score = 0
         issues = []
         
@@ -244,11 +238,11 @@ class AIService:
             "issues": issues,
             "certificate_ready": status == "ผ่าน"
         }
-    
+
     @classmethod
     def _generate_recommendations(cls, herb_result: Dict, quality_result: Dict, 
-                                disease_result: Dict, maturity_result: Dict) -> List[str]:
-        """Generate actionable recommendations"""
+                                  disease_result: Dict, maturity_result: Dict) -> List[str]:
+        """Generate actionable recommendations."""
         recommendations = []
         
         # Confidence recommendations
@@ -277,10 +271,10 @@ class AIService:
             recommendations.append("คุณภาพดีเยี่ยม พร้อมสำหรับการรับรอง GACP")
         
         return recommendations
-    
+
     @classmethod
     def _get_disease_recommendation(cls, disease: str) -> str:
-        """Get specific recommendation for each disease"""
+        """Get specific recommendation for each disease."""
         recommendations = {
             "เชื้อราขาว": "ลดความชื้น ปรับปรุงการระบายอากาศ",
             "เชื้อราดำ": "ตรวจสอบการเก็บรักษา ทำความสะอาดพื้นที่",
@@ -293,10 +287,10 @@ class AIService:
             "สารเคมีตกค้าง": "หยุดใช้สารเคมี ล้างทำความสะอาด"
         }
         return recommendations.get(disease, "ปรึกษาผู้เชี่ยวชาญ")
-    
+
     @classmethod
     def _estimate_days_to_harvest(cls, maturity_score: float) -> int:
-        """Estimate days until optimal harvest"""
+        """Estimate days until optimal harvest."""
         if maturity_score > 0.8:
             return 0
         elif maturity_score > 0.6:
@@ -305,10 +299,10 @@ class AIService:
             return 14
         else:
             return 21
-    
+
     @classmethod
     async def get_status(cls) -> Dict:
-        """Get AI service status"""
+        """Get AI service status."""
         return {
             "herb_classifier": cls._herb_classifier is not None,
             "quality_detector": cls._quality_detector is not None,
@@ -321,9 +315,9 @@ class AIService:
                 cls._maturity_assessor is not None
             ])
         }
-    
+
     @classmethod
     def cleanup(cls):
-        """Cleanup resources"""
+        """Cleanup resources (production safe)."""
         # ONNX Runtime sessions are automatically cleaned up
         pass
