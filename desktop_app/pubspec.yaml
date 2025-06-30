@@ -1,0 +1,51 @@
+name: gacp_herbal_desktop
+description: GACP Herbal AI Platform for Desktop
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Import shared core package
+  gacp_core:
+    path: ../shared_packages/gacp_core
+  
+  # Desktop-specific dependencies
+  window_manager: ^0.3.7
+  screen_retriever: ^0.1.9
+  
+  # File handling (Desktop-enhanced)
+  file_picker: ^6.1.1
+  path_provider: ^2.1.1
+  desktop_drop: ^0.4.4
+  
+  # Batch processing
+  isolate: ^2.1.1
+  
+  # Advanced file operations
+  archive: ^3.4.9
+  csv: ^5.0.2
+  excel: ^2.1.0
+  
+  # All mobile dependencies (inherited)
+  # ... (same as mobile but with desktop optimizations)
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/ai_models/
+    - assets/templates/
+  
+  fonts:
+    - family: Sarabun
+      fonts:
+        - asset: assets/fonts/Sarabun-Regular.ttf
+        - asset: assets/fonts/Sarabun-Bold.ttf
+          weight: 700
