@@ -10,19 +10,19 @@ class AppTheme {
   static const Color warningAmber = Color(0xFFF57C00);      // Warning Amber
   static const Color errorRed = Color(0xFFD32F2F);          // Error Red
   static const Color successGreen = Color(0xFF388E3C);      // Success Green
-
+  
   // Neutral Palette
   static const Color backgroundLight = Color(0xFFFAFAFA);
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color onSurfaceLight = Color(0xFF1A1A1A);
   static const Color outlineLight = Color(0xFFE0E0E0);
-
+  
   // Dark Theme Colors
   static const Color backgroundDark = Color(0xFF121212);
   static const Color surfaceDark = Color(0xFF1E1E1E);
   static const Color onSurfaceDark = Color(0xFFE0E0E0);
   static const Color outlineDark = Color(0xFF404040);
-
+  
   // Semantic Colors
   static const Color herbCannabis = Color(0xFF4CAF50);
   static const Color herbTurmeric = Color(0xFFFF9800);
@@ -30,13 +30,13 @@ class AppTheme {
   static const Color herbBlackGalingale = Color(0xFF795548);
   static const Color herbCassumunar = Color(0xFF9C27B0);
   static const Color herbKratom = Color(0xFF607D8B);
-
+  
   // Quality Status Colors
   static const Color qualityExcellent = Color(0xFF00C853);
   static const Color qualityGood = Color(0xFF4CAF50);
   static const Color qualityFair = Color(0xFFFF9800);
   static const Color qualityPoor = Color(0xFFF44336);
-
+  
   // Certificate Status Colors
   static const Color statusApproved = Color(0xFF4CAF50);
   static const Color statusPending = Color(0xFFFF9800);
@@ -330,14 +330,14 @@ class AppTheme {
       
       // Switch Theme
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
+        thumbColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
             return primaryGreen;
           }
           return const Color(0xFFE0E0E0);
         }),
-        trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
+        trackColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
             return primaryGreen.withOpacity(0.54);
           }
           return const Color(0xFFBDBDBD);
@@ -346,13 +346,13 @@ class AppTheme {
       
       // Checkbox Theme
       checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
+        fillColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
             return primaryGreen;
           }
           return Colors.transparent;
         }),
-        checkColor: WidgetStateProperty.all(Colors.white),
+        checkColor: MaterialStateProperty.all(Colors.white),
         side: const BorderSide(color: Color(0xFFBDBDBD), width: 2),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
@@ -361,8 +361,8 @@ class AppTheme {
       
       // Radio Theme
       radioTheme: RadioThemeData(
-        fillColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
+        fillColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
             return primaryGreen;
           }
           return const Color(0xFFBDBDBD);

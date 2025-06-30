@@ -1,64 +1,94 @@
 import 'package:dio/dio.dart';
+import 'package:gacp_core/core/utils/logger.dart';
 
-/// AuthService สำหรับ certificate module (standalone, ไม่ config กับไฟล์อื่น)
+/// Production-ready AuthService for certificate module
 class CertificateAuthService {
   final Dio _dio;
 
   CertificateAuthService({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
-              baseUrl: 'https://api.example.com', // เปลี่ยนเป็น production endpoint จริง
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
-            ));
+              baseUrl: 'https://api.gacp-platform.com', // Production endpoint
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              headers: {'Content-Type': 'application/json'},
+            )) {
+    // Add interceptors for production
+    _dio.interceptors.add(LogInterceptor(
+      request: true,
+      responseBody: true,
+      requestBody: true,
+      error: true,
+    ));
+  }
 
-  /// Login สำหรับ certificate module
+  /// Login for certificate module
   Future<AuthResult> login({
     required String username,
     required String password,
   }) async {
     try {
       final response = await _dio.post(
-        '/certificate/auth/login',
+        '/api/certificate/auth/login',
         data: {'username': username, 'password': password},
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['token'] != null) {
+      final data = response.data as Map<String, dynamic>;
+      if (data['token'] != null) {
+        AppLogger.info('User $username logged in successfully');
         return AuthResult.success(token: data['token']);
       }
-      return AuthResult.failure(message: data['message'] ?? 'ไม่สามารถเข้าสู่ระบบ');
+      return AuthResult.failure(
+          message: data['message'] ?? 'ไม่สามารถเข้าสู่ระบบได้');
+    } on DioException catch (e) {
+      AppLogger.error('Login failed for $username', e);
+      return AuthResult.failure(
+          message: _handleDioError(e) ?? 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
     } catch (e) {
-      return AuthResult.failure(message: 'เกิดข้อผิดพลาด: ${e.toString()}');
+      AppLogger.error('Unexpected login error', e);
+      return AuthResult.failure(message: 'เกิดข้อผิดพลาดที่ไม่คาดคิด');
     }
   }
 
-  /// ตรวจสอบ token
+  /// Validate token
   Future<bool> validateToken(String token) async {
     try {
       final response = await _dio.get(
-        '/certificate/auth/validate',
+        '/api/certificate/auth/validate',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       return response.data['valid'] == true;
-    } catch (_) {
+    } on DioException catch (e) {
+      AppLogger.warning('Token validation failed', e);
       return false;
     }
   }
 
-  /// ออกจากระบบ
-  Future<void> logout(String token) async {
+  /// Logout
+  Future<bool> logout(String token) async {
     try {
       await _dio.post(
-        '/certificate/auth/logout',
+        '/api/certificate/auth/logout',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-    } catch (_) {
-      // ignore error
+      AppLogger.info('User logged out successfully');
+      return true;
+    } on DioException catch (e) {
+      AppLogger.error('Logout failed', e);
+      return false;
     }
+  }
+
+  /// Handle Dio errors
+  String? _handleDioError(DioException e) {
+    if (e.response != null) {
+      final data = e.response?.data as Map<String, dynamic>?;
+      return data?['message'] as String?;
+    }
+    return 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว';
   }
 }
 
-/// ผลลัพธ์การเข้าสู่ระบบ
+/// Authentication result model
 class AuthResult {
   final bool isSuccess;
   final String? token;

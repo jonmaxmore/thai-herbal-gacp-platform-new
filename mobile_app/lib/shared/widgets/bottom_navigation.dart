@@ -49,31 +49,23 @@ class BottomNavigation extends ConsumerWidget {
 
   void _onTabTapped(BuildContext context, WidgetRef ref, int index) {
     final currentIndex = ref.read(navigationIndexProvider);
-
+    
     // Don't navigate if already on the same tab
     if (currentIndex == index) return;
 
     // Update navigation index
     ref.read(navigationIndexProvider.notifier).setIndex(index);
 
-    // Navigate to the corresponding route (ensure these routes exist in GoRouter config)
+    // Navigate to the corresponding route
     switch (index) {
       case 0:
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/analysis');
-        break;
-      case 2:
-        context.go('/certificate/status');
-        break;
-      case 3:
-        context.go('/tracking/timeline');
-        break;
-      case 4:
-        context.go('/profile');
-        break;
-      default:
+        case 2:
+        case 3:
+        case 4:
+        default:
         context.go('/dashboard');
     }
   }

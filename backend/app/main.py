@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
+import uvicorn
 import os
+from pathlib import Path
 
 from app.core.config import settings
 from app.core.database import engine, Base
@@ -33,7 +35,7 @@ async def lifespan(app: FastAPI):
     logging.info("🛑 Shutting down...")
     AIService.cleanup()
 
-# FastAPI instance
+# Create FastAPI instance
 app = FastAPI(
     title="GACP Herbal AI Platform API",
     description="Multiplatform API for Thai Herbal GACP Certification",
@@ -73,11 +75,11 @@ async def health_check():
     return {"status": "healthy", "ai_models": await AIService.get_status()}
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000)),
         log_level="info",
-        workers=int(os.getenv("UVICORN_WORKERS", 2))
+        workers=int(os.getenv("UVICORN_WORKERS", 1)),
+        reload=os.getenv("ENVIRONMENT", "development") == "development"
     )

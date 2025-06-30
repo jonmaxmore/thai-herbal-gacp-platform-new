@@ -91,4 +91,23 @@ class AppValidators {
     }
     return null;
   }
+
+  static String? date(String? value, {String? message}) {
+    if (value == null || value.trim().isEmpty) return null;
+    if (!v.isDate(value)) {
+      return message ?? 'รูปแบบวันที่ไม่ถูกต้อง (YYYY-MM-DD)';
+    }
+    return null;
+  }
+
+  static String? afterDate(String? value, String? reference, {String? message}) {
+    if (value == null || reference == null) return null;
+    final valueDate = DateTime.tryParse(value);
+    final referenceDate = DateTime.tryParse(reference);
+    if (valueDate == null || referenceDate == null) return null;
+    if (!valueDate.isAfter(referenceDate)) {
+      return message ?? 'ต้องเป็นวันที่หลังจาก ${referenceDate.toLocal()}';
+    }
+    return null;
+  }
 }

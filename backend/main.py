@@ -71,32 +71,43 @@ limiter = Limiter(key_func=get_remote_address)
 async def lifespan(app: FastAPI):
     """Application startup and shutdown events"""
     logger.info("🚀 Starting GACP Herbal AI Platform...")
+    
     try:
         # Create database tables
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Database tables created")
+        
         # Initialize services
         await AIService.initialize()
         logger.info("✅ AI Service initialized")
+        
         await NotificationService.initialize()
         logger.info("✅ Notification Service initialized")
+        
         await CacheService.initialize()
         logger.info("✅ Cache Service initialized")
+        
         # Start system monitoring
         asyncio.create_task(system_monitor.start_monitoring())
         logger.info("✅ System monitoring started")
+        
         logger.info("🎉 Application startup completed")
+        
     except Exception as e:
         logger.error(f"❌ Application startup failed: {e}", exc_info=True)
         raise e
+    
     yield
+    
     # Shutdown
     logger.info("🛑 Shutting down application...")
+    
     try:
         system_monitor.stop_monitoring()
         AIService.cleanup()
         await CacheService.cleanup()
         logger.info("✅ Application shutdown completed")
+        
     except Exception as e:
         logger.error(f"❌ Application shutdown error: {e}", exc_info=True)
 
@@ -105,9 +116,9 @@ app = FastAPI(
     title="GACP Herbal AI Platform API",
     description="""
     ## GACP Herbal AI Platform - Production API
-
+    
     Advanced AI-powered platform for Thai herbal plant GACP certification.
-
+    
     ### Features
     - 🤖 AI-powered herb identification and quality assessment
     - 📱 Multi-platform support (Mobile, Desktop, Web)
@@ -116,16 +127,16 @@ app = FastAPI(
     - 🏥 GACP compliance verification
     - 📋 Certificate management system
     - 🔍 Complete track & trace functionality
-
+    
     ### Authentication
     Most endpoints require Bearer token authentication.
     API key authentication is available for system integrations.
-
+    
     ### Rate Limiting
     - Authenticated users: 1000 requests/hour
     - Anonymous users: 100 requests/hour
     - AI analysis: 50 requests/hour per user
-
+    
     ### Support
     - Documentation: `/docs` (Swagger UI)
     - ReDoc: `/redoc`

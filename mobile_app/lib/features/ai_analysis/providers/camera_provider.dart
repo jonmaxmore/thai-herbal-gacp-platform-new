@@ -14,6 +14,7 @@ class CameraNotifier extends StateNotifier<CameraState> {
 
   Future<void> initialize() async {
     if (state.isInitialized) return;
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -26,13 +27,14 @@ class CameraNotifier extends StateNotifier<CameraState> {
       AppLogger.error('Camera initialization failed', e, s);
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: 'ไม่สามารถเริ่มต้นกล้องได้',
       );
     }
   }
 
   Future<void> _initializeController() async {
     if (_cameras.isEmpty) return;
+
     final camera = _cameras[_currentCameraIndex];
     final controller = CameraController(
       camera,
@@ -52,13 +54,17 @@ class CameraNotifier extends StateNotifier<CameraState> {
       AppLogger.info('Camera initialized successfully');
     } catch (e, s) {
       controller.dispose();
-      AppLogger.error('ไม่สามารถเริ่มต้นกล้องได้', e, s);
-      throw Exception('ไม่สามารถเริ่มต้นกล้องได้: $e');
+      AppLogger.error('Camera initialization error', e, s);
+      state = state.copyWith(
+        isLoading: false,
+        error: 'ไม่สามารถเริ่มต้นกล้องได้',
+      );
     }
   }
 
   Future<void> switchCamera() async {
     if (_cameras.length <= 1) return;
+
     state = state.copyWith(isLoading: true);
 
     try {
@@ -76,6 +82,7 @@ class CameraNotifier extends StateNotifier<CameraState> {
 
   Future<void> toggleFlash() async {
     if (!state.isInitialized) return;
+
     try {
       final newFlashMode = state.isFlashOn ? FlashMode.off : FlashMode.torch;
       await state.controller!.setFlashMode(newFlashMode);
@@ -87,7 +94,10 @@ class CameraNotifier extends StateNotifier<CameraState> {
 
   void setResolution(bool highResolution) {
     if (state.isHighResolution == highResolution) return;
+    
     state = state.copyWith(isHighResolution: highResolution);
+    
+    // Reinitialize camera with new resolution
     if (state.isInitialized) {
       _reinitializeCamera();
     }
@@ -99,6 +109,7 @@ class CameraNotifier extends StateNotifier<CameraState> {
 
   Future<void> _reinitializeCamera() async {
     state = state.copyWith(isLoading: true);
+    
     try {
       await state.controller?.dispose();
       await _initializeController();
@@ -112,11 +123,15 @@ class CameraNotifier extends StateNotifier<CameraState> {
   }
 
   Future<XFile?> takePicture() async {
-    if (!state.isInitialized || state.controller == null || state.isLoading) return null;
+    if (!state.isInitialized || state.controller == null || state.isLoading) {
+      return null;
+    }
+    
     try {
       state = state.copyWith(isLoading: true);
       final file = await state.controller!.takePicture();
       state = state.copyWith(isLoading: false);
+      AppLogger.info('Picture taken successfully');
       return file;
     } catch (e, s) {
       AppLogger.error('Failed to take picture', e, s);

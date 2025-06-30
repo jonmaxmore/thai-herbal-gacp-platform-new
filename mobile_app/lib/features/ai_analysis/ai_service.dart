@@ -1,11 +1,9 @@
-// lib/core/services/ai_service.dart
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
 import 'dart:typed_data';
 import 'dart:io';
 import '../../core/utils/logger.dart';
 
-/// Production-ready AIService for TFLite model inference
 class AIService {
   static Interpreter? _herbClassifier;
   static Interpreter? _qualityDetector;
@@ -35,11 +33,14 @@ class AIService {
   static Future<HerbAnalysisResult> analyzeImage(File imageFile) async {
     if (!isReady) await initialize();
 
+    // Read and decode image
     final bytes = await imageFile.readAsBytes();
     final image = img.decodeImage(bytes);
     if (image == null) {
       throw Exception('ไม่สามารถอ่านไฟล์ภาพได้');
     }
+    
+    // Preprocess image
     final resized = img.copyResize(image, width: 224, height: 224);
     final input = _imageToByteListFloat32(resized);
 
@@ -91,7 +92,6 @@ class AIService {
   }
 }
 
-/// Structured result for herb analysis
 class HerbAnalysisResult {
   final String herbName;
   final double confidence;
@@ -106,7 +106,7 @@ class HerbAnalysisResult {
     required this.detectedDiseases,
     required this.recommendations,
   });
-
+  
   factory HerbAnalysisResult.fromModelOutputs(
     List<double> herbOutput,
     List<double> qualityOutput,
@@ -127,6 +127,7 @@ class HerbAnalysisResult {
   static List<String> _processDiseaseOutput(List<double> diseaseOutput) {
     final diseases = ['เชื้อรา', 'แบคทีเรีย', 'ไวรัส', 'แมลง', 'ความชื้นสูง'];
     final List<String> detected = [];
+    
     for (int i = 0; i < diseaseOutput.length && i < diseases.length; i++) {
       if (diseaseOutput[i] > 0.5) {
         detected.add(diseases[i]);
@@ -140,6 +141,7 @@ class HerbAnalysisResult {
     List<double> diseaseOutput,
   ) {
     final List<String> recommendations = [];
+    
     if (qualityOutput[0] > 0.8) {
       recommendations.add('คุณภาพดีเยี่ยม พร้อมสำหรับการรับรอง');
     } else if (qualityOutput[0] > 0.6) {
@@ -147,7 +149,12 @@ class HerbAnalysisResult {
     } else {
       recommendations.add('คุณภาพต่ำ ต้องแก้ไขก่อนส่งรับรอง');
     }
-    // สามารถเพิ่ม logic แนะนำจาก diseaseOutput ได้
+    
+    // Add disease-specific recommendations
+    if (diseaseOutput.isNotEmpty) {
+      recommendations.add('พบปัญหาสุขภาพพืช ควรปรึกษาผู้เชี่ยวชาญ');
+    }
+    
     return recommendations;
   }
 }

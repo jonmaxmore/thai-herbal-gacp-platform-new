@@ -43,54 +43,78 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLogDiagnostics: false,
     redirect: (context, state) {
       final location = state.location;
+      
+      // Check auth state
       final isAuthenticated = authState.maybeWhen(
         authenticated: (_) => true,
         orElse: () => false,
       );
+      
       final isLoading = authState.maybeWhen(
         loading: () => true,
         orElse: () => false,
       );
-      if (isLoading && location == '/splash') return null;
-      if (!hasSeenOnboarding && !location.startsWith('/onboarding') && location != '/splash') {
+      
+      // Don't redirect while loading
+      if (isLoading && location == '/splash') {
+        return null;
+      }
+      
+      // Handle onboarding
+      if (!hasSeenOnboarding && 
+          !location.startsWith('/onboarding') && 
+          location != '/splash') {
         return '/onboarding';
       }
-      final isOnAuthPage = _isAuthPage(location);
-      final isOnPublicPage = _isPublicPage(location);
+      
+      // Handle authentication
+      final isOnAuthPage = location.startsWith('/auth/');
+      final isOnPublicPage = ['/splash', '/onboarding', '/help'].contains(location);
+      
       if (!isAuthenticated && !isOnAuthPage && !isOnPublicPage) {
         return '/auth/login';
       }
+      
       if (isAuthenticated && isOnAuthPage) {
         return '/dashboard';
       }
+      
       return null;
     },
     routes: [
+      // Splash
       GoRoute(
         path: '/splash',
         name: 'splash',
         builder: (context, state) => const SplashPage(),
       ),
+      
+      // Onboarding
       GoRoute(
         path: '/onboarding',
         name: 'onboarding',
         builder: (context, state) => const OnboardingPage(),
       ),
+      
+      // Authentication Routes
       GoRoute(
         path: '/auth/login',
         name: 'login',
         builder: (context, state) => const LoginPage(),
       ),
+      
       GoRoute(
         path: '/auth/register',
         name: 'register',
         builder: (context, state) => const RegisterPage(),
       ),
+      
       GoRoute(
         path: '/auth/forgot-password',
         name: 'forgot-password',
         builder: (context, state) => const ForgotPasswordPage(),
       ),
+      
       GoRoute(
         path: '/auth/verify-email',
         name: 'verify-email',
@@ -99,9 +123,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           return VerifyEmailPage(email: email);
         },
       ),
+      
+      // Main App with Bottom Navigation
       ShellRoute(
         builder: (context, state, child) => MainScaffold(child: child),
         routes: [
+          // Dashboard
           GoRoute(
             path: '/dashboard',
             name: 'dashboard',
@@ -110,11 +137,14 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
             ),
           ),
+          
+          // AI Analysis
           GoRoute(
             path: '/analysis',
             name: 'analysis',
             redirect: (context, state) => '/analysis/camera',
           ),
+          
           GoRoute(
             path: '/analysis/camera',
             name: 'camera',
@@ -123,6 +153,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
             ),
           ),
+          
           GoRoute(
             path: '/analysis/upload',
             name: 'upload',
@@ -131,6 +162,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
             ),
           ),
+          
           GoRoute(
             path: '/analysis/batch',
             name: 'batch-analysis',
@@ -139,6 +171,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
             ),
           ),
+          
+          // Certificates
           GoRoute(
             path: '/certificates',
             name: 'certificates',
@@ -147,6 +181,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
             ),
           ),
+          
+          // Tracking
           GoRoute(
             path: '/tracking',
             name: 'tracking',
@@ -155,6 +191,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
             ),
           ),
+          
+          // Profile
           GoRoute(
             path: '/profile',
             name: 'profile',
@@ -165,6 +203,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      
+      // Detailed Pages (Outside bottom navigation)
       GoRoute(
         path: '/analysis/result',
         name: 'analysis-result',
@@ -173,11 +213,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           return AnalysisResultPage(data: analysisData);
         },
       ),
+      
       GoRoute(
         path: '/certificates/apply',
         name: 'apply-certificate',
         builder: (context, state) => const ApplyCertificatePage(),
       ),
+      
       GoRoute(
         path: '/certificates/:id',
         name: 'certificate-detail',
@@ -186,11 +228,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           return CertificateDetailPage(certificateId: certificateId);
         },
       ),
+      
       GoRoute(
         path: '/tracking/scanner',
         name: 'qr-scanner',
         builder: (context, state) => const QRScannerPage(),
       ),
+      
       GoRoute(
         path: '/tracking/timeline/:code',
         name: 'tracking-timeline',
@@ -199,11 +243,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           return TimelinePage(trackingCode: trackingCode);
         },
       ),
+      
       GoRoute(
         path: '/profile/edit',
         name: 'edit-profile',
         builder: (context, state) => const EditProfilePage(),
       ),
+      
+      // Settings
       GoRoute(
         path: '/settings',
         name: 'settings',
@@ -226,11 +273,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      
+      // Herb Encyclopedia
       GoRoute(
         path: '/herbs',
         name: 'herb-encyclopedia',
         builder: (context, state) => const HerbEncyclopediaPage(),
       ),
+      
       GoRoute(
         path: '/herbs/:id',
         name: 'herb-detail',
@@ -239,26 +289,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           return HerbDetailPage(herbId: herbId);
         },
       ),
+      
+      // Support
       GoRoute(
         path: '/help',
         name: 'help',
         builder: (context, state) => const HelpPage(),
       ),
+      
       GoRoute(
         path: '/contact',
         name: 'contact',
         builder: (context, state) => const ContactPage(),
       ),
     ],
+    
+    // Error handling
     errorBuilder: (context, state) => ErrorPage(
       error: state.error.toString(),
       onRetry: () => context.go('/dashboard'),
     ),
   );
 });
-
-bool _isAuthPage(String location) => location.startsWith('/auth/');
-bool _isPublicPage(String location) => ['/splash', '/onboarding', '/help'].contains(location);
 
 Page<dynamic> _buildPageWithTransition({
   required Widget child,

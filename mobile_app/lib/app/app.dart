@@ -7,7 +7,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'router.dart';
 import 'theme.dart';
 import 'notification_service.dart';
-
 import '../core/providers/auth_provider.dart';
 import '../core/providers/locale_provider.dart';
 import '../core/providers/theme_provider.dart';
@@ -39,12 +38,19 @@ class GACPHerbalApp extends ConsumerWidget {
     final connectivity = ref.watch(connectivityProvider);
 
     return MaterialApp.router(
+      // App Information
       title: 'GACP Herbal AI',
       debugShowCheckedModeBanner: false,
+      
+      // Routing
       routerConfig: router,
+      
+      // Theming
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      
+      // Localization
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
@@ -53,6 +59,8 @@ class GACPHerbalApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      
+      // Global Configuration
       builder: (context, child) {
         // Global error handling for widget tree
         ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -61,18 +69,23 @@ class GACPHerbalApp extends ConsumerWidget {
         };
 
         return MediaQuery(
+          // Prevent system text scaling from affecting UI
           data: MediaQuery.of(context).copyWith(
             textScaler: const TextScaler.linear(1.0),
           ),
           child: Stack(
             children: [
               child ?? const SizedBox.shrink(),
+              
+              // Global overlays
               if (!connectivity.isConnected) const ConnectivityOverlay(),
               const GlobalLoadingOverlay(),
             ],
           ),
         );
       },
+      
+      // Scroll behavior
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         dragDevices: {
           PointerDeviceKind.mouse,
@@ -107,11 +120,11 @@ class GACPHerbalApp extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'กรุณารีสตาร์ทแอป',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.redAccent,
+                color: Colors.red[700],
               ),
             ),
             if (AppConstants.isDebugMode) ...[

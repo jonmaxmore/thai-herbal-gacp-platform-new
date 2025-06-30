@@ -19,23 +19,30 @@ class AIService:
         """Initialize all AI models for production use."""
         try:
             model_path = Path("app/ai_models")
+            
+            # Load models with ONNX Runtime
             cls._herb_classifier = ort.InferenceSession(
                 str(model_path / "herb_classifier_v2.onnx"),
                 providers=['CPUExecutionProvider']
             )
+            
             cls._quality_detector = ort.InferenceSession(
                 str(model_path / "quality_detector_v2.onnx"),
                 providers=['CPUExecutionProvider']
             )
+            
             cls._disease_detector = ort.InferenceSession(
                 str(model_path / "disease_detector_v2.onnx"),
                 providers=['CPUExecutionProvider']
             )
+            
             cls._maturity_assessor = ort.InferenceSession(
                 str(model_path / "maturity_assessor_v1.onnx"),
                 providers=['CPUExecutionProvider']
             )
+            
             logging.info("✅ All AI models loaded successfully")
+            
         except Exception as e:
             logging.error(f"❌ Error loading AI models: {e}")
             raise e
@@ -43,11 +50,16 @@ class AIService:
     @classmethod
     async def analyze_herb_image(cls, image_bytes: bytes) -> Dict:
         """Comprehensive herb analysis for production."""
+        # Preprocess image
         image = cls._preprocess_image(image_bytes)
+        
+        # Run all models
         herb_result = await cls._classify_herb(image)
         quality_result = await cls._assess_quality(image)
         disease_result = await cls._detect_diseases(image)
         maturity_result = await cls._assess_maturity(image)
+        
+        # Combine results
         analysis = {
             "herb_identification": herb_result,
             "quality_assessment": quality_result,
@@ -60,6 +72,7 @@ class AIService:
                 herb_result, quality_result, disease_result, maturity_result
             )
         }
+        
         return analysis
 
     @classmethod
@@ -76,6 +89,7 @@ class AIService:
         """Classify herb species."""
         input_name = cls._herb_classifier.get_inputs()[0].name
         output = cls._herb_classifier.run(None, {input_name: image})[0]
+        
         herb_classes = [
             "กัญชา (Cannabis sativa)",
             "ขมิ้นชัน (Curcuma longa)", 
@@ -84,9 +98,11 @@ class AIService:
             "ไพล (Zingiber cassumunar)",
             "กระท่อม (Mitragyna speciosa)"
         ]
+        
         probabilities = output[0]
         predicted_idx = int(np.argmax(probabilities))
         confidence = float(probabilities[predicted_idx])
+        
         return {
             "species": herb_classes[predicted_idx],
             "confidence": confidence * 100,
@@ -101,12 +117,15 @@ class AIService:
         """Assess overall quality."""
         input_name = cls._quality_detector.get_inputs()[0].name
         output = cls._quality_detector.run(None, {input_name: image})[0]
+        
         quality_score = float(output[0][0])
         contamination_score = float(output[0][1])
         freshness_score = float(output[0][2])
+        
         overall_grade = cls._calculate_quality_grade(
             quality_score, contamination_score, freshness_score
         )
+        
         return {
             "overall_score": quality_score * 100,
             "contamination_level": contamination_score * 100,
@@ -120,13 +139,16 @@ class AIService:
         """Detect diseases and defects."""
         input_name = cls._disease_detector.get_inputs()[0].name
         output = cls._disease_detector.run(None, {input_name: image})[0]
+        
         disease_classes = [
             "เชื้อราขาว", "เชื้อราดำ", "แบคทีเรีย", "ไวรัส",
             "แมลงศัตรูพืช", "ความชื้นสูง", "แสงแดดเกิน",
             "ขาดธาตุอาหาร", "สารเคมีตกค้าง", "ปลอดภัย"
         ]
+        
         probabilities = output[0]
         detected_issues = []
+        
         for i, prob in enumerate(probabilities):
             if prob > 0.3 and disease_classes[i] != "ปลอดภัย":
                 detected_issues.append({
@@ -134,6 +156,7 @@ class AIService:
                     "severity": float(prob) * 100,
                     "recommendation": cls._get_disease_recommendation(disease_classes[i])
                 })
+        
         return {
             "issues_detected": detected_issues,
             "health_status": "ปลอดภัย" if not detected_issues else "มีปัญหา",
@@ -145,10 +168,13 @@ class AIService:
         """Assess maturity/harvest readiness."""
         input_name = cls._maturity_assessor.get_inputs()[0].name
         output = cls._maturity_assessor.run(None, {input_name: image})[0]
+        
         maturity_score = float(output[0][0])
         harvest_readiness = float(output[0][1])
+        
         maturity_stages = ["อ่อน", "กำลังเจริญ", "สุก", "แก่เกิน"]
         stage_idx = min(int(maturity_score * 4), 3)
+        
         return {
             "maturity_score": maturity_score * 100,
             "harvest_readiness": harvest_readiness * 100,
@@ -176,26 +202,36 @@ class AIService:
         """Evaluate GACP compliance."""
         compliance_score = 0
         issues = []
+        
+        # Species identification confidence (20%)
         if herb_result["confidence"] > 95:
             compliance_score += 20
         elif herb_result["confidence"] > 90:
             compliance_score += 15
         else:
             issues.append("ความแม่นยำในการระบุสายพันธุ์ต่ำ")
+        
+        # Quality assessment (40%)
         if quality_result["overall_score"] > 80:
             compliance_score += 40
         elif quality_result["overall_score"] > 70:
             compliance_score += 30
         else:
             issues.append("คุณภาพไม่ผ่านมาตรฐาน GACP")
+        
+        # Disease/contamination (30%)
         if disease_result["safety_score"] > 90:
             compliance_score += 30
         elif disease_result["safety_score"] > 80:
             compliance_score += 20
         else:
             issues.append("พบสารปนเปื้อนหรือโรคพืช")
+        
+        # Documentation completeness (10%)
         compliance_score += 10  # Assume complete for demo
+        
         status = "ผ่าน" if compliance_score >= 80 else "ไม่ผ่าน"
+        
         return {
             "score": compliance_score,
             "status": status,
@@ -208,21 +244,32 @@ class AIService:
                                   disease_result: Dict, maturity_result: Dict) -> List[str]:
         """Generate actionable recommendations."""
         recommendations = []
+        
+        # Confidence recommendations
         if herb_result["confidence"] < 95:
             recommendations.append("ปรับปรุงคุณภาพภาพถ่ายหรือมุมมองการถ่าย")
+        
+        # Quality recommendations
         if quality_result["overall_score"] < 80:
             recommendations.append("ปรับปรุงเงื่อนไขการเก็บรักษาและการขนส่ง")
+        
         if quality_result["contamination_level"] > 20:
             recommendations.append("ตรวจสอบและแก้ไขแหล่งที่มาของการปนเปื้อน")
+        
+        # Disease recommendations
         for issue in disease_result["issues_detected"]:
             recommendations.append(f"แก้ไขปัญหา: {issue['recommendation']}")
+        
+        # Maturity recommendations
         if not maturity_result["optimal_harvest"]:
             if maturity_result["days_to_optimal"] > 0:
                 recommendations.append(f"รอการเก็บเกี่ยวอีก {maturity_result['days_to_optimal']} วัน")
             else:
                 recommendations.append("ควรเก็บเกี่ยวโดยเร็วที่สุด")
+        
         if not recommendations:
             recommendations.append("คุณภาพดีเยี่ยม พร้อมสำหรับการรับรอง GACP")
+        
         return recommendations
 
     @classmethod

@@ -2,7 +2,6 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'analysis_result.g.dart';
 
-/// ผลลัพธ์การวิเคราะห์ภาพสมุนไพร (Production-ready)
 @JsonSerializable()
 class AnalysisResult {
   final String id;
@@ -13,7 +12,6 @@ class AnalysisResult {
   final DiseaseDetectionResult diseaseDetection;
   final MaturityAssessmentResult maturityAssessment;
   final GacpComplianceResult gacpCompliance;
-  @JsonKey(defaultValue: [])
   final List<String> recommendations;
   final int processingTimeMs;
 
@@ -64,7 +62,9 @@ class AnalysisResult {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is AnalysisResult && runtimeType == other.runtimeType && id == other.id;
+      other is AnalysisResult && 
+      runtimeType == other.runtimeType && 
+      id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -74,7 +74,6 @@ class AnalysisResult {
 class HerbClassificationResult {
   final String predictedHerb;
   final double confidence;
-  @JsonKey(defaultValue: {})
   final Map<String, double> allProbabilities;
   final int inferenceTimeMs;
 
@@ -117,7 +116,6 @@ class QualityAssessmentResult {
 
 @JsonSerializable()
 class DiseaseDetectionResult {
-  @JsonKey(defaultValue: [])
   final List<DetectedIssue> detectedIssues;
   final double safetyScore;
   final String healthStatus;
@@ -184,7 +182,6 @@ class MaturityAssessmentResult {
 class GacpComplianceResult {
   final double score;
   final String status;
-  @JsonKey(defaultValue: [])
   final List<String> issues;
   final bool certificateReady;
 
